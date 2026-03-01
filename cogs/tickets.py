@@ -54,7 +54,7 @@ class TicketControls(discord.ui.View):
 
         canal_boas_vindas = interaction.guild.get_channel(Config.WELCOME_ID)
         if canal_boas_vindas:
-            mensagem = f"🎉 Boas-vindas à comunidade, {membro.mention}!"
+            mensagem = f"🎉 {membro.mention} entrou no servidor!"
             await canal_boas_vindas.send(mensagem)
 
     @discord.ui.button(label="Recusar / Fechar", style=discord.ButtonStyle.red, custom_id="fechar_ticket", emoji="🔒")
