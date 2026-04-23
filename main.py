@@ -19,11 +19,15 @@ class AuroraBot(commands.Bot):
         print("Carregando módulos...")
         await self.load_extension('cogs.exportar_membros')
         print("Módulo 'exportar_membros' carregado!")
+        
         await self.load_extension('cogs.tickets')
         print("Módulo 'tickets' carregado!")
-        await self.tree.sync()
+        
         await self.load_extension('cogs.verificar_presenca')
         print("Módulo 'verificar_presenca' carregado!")
+        
+        print("Sincronizando comandos com o Discord...")
+        await self.tree.sync()
 
     async def on_ready(self):
         print('--------------------------------------------------')
