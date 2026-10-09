@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import io
 import json
 import os
+from cryptography.fernet import Fernet, InvalidToken
 
 
 class Config:
@@ -18,20 +19,43 @@ class Config:
     AVISADOS_FILE = "membros_avisados.json" # Arquivo para persistir quem já foi avisado
 
 
+# ─── Helpers para persistir membros_avisados em disco ────────────────────────
+def _fernet():
+    chave = os.getenv("AVISADOS_KEY")
+    if not chave:
+        return None
+    try:
+        return Fernet(chave.encode())
+    except ValueError:
+        return None
+
+
 def _carregar_avisados() -> set:
-    if os.path.exists(Config.AVISADOS_FILE):
-        try:
-            with open(Config.AVISADOS_FILE, "r") as f:
-                return set(json.load(f))
-        except (json.JSONDecodeError, IOError):
-            pass
-    return set()
+    if not os.path.exists(Config.AVISADOS_FILE):
+        return set()
+    try:
+        with open(Config.AVISADOS_FILE, "rb") as f:
+            conteudo = f.read()
+        fernet = _fernet()
+        if fernet is not None:
+            try:
+                conteudo = fernet.decrypt(conteudo)
+            except InvalidToken:
+                pass  # arquivo antigo em texto puro; vira criptografado no próximo salvamento
+        return set(json.loads(conteudo.decode("utf-8")))
+    except (json.JSONDecodeError, UnicodeDecodeError, IOError, ValueError):
+        return set()
 
 
 def _salvar_avisados(avisados: set):
+    fernet = _fernet()
+    if fernet is None:
+        print("AVISADOS_KEY ausente ou inválida: membros_avisados.json NÃO foi gravado.")
+        return
     try:
-        with open(Config.AVISADOS_FILE, "w") as f:
-            json.dump(list(avisados), f)
+        dados = json.dumps(list(avisados)).encode("utf-8")
+        with open(Config.AVISADOS_FILE, "wb") as f:
+            f.write(fernet.encrypt(dados))
     except IOError:
         pass
 
@@ -92,7 +116,7 @@ class TicketControls(discord.ui.View):
 
         canal_boas_vindas = interaction.guild.get_channel(Config.WELCOME_ID)
         if canal_boas_vindas:
-            mensagem = f"🎉 Boas-vindas {membro.mention}! Pegue seus cargos em <#1426721213186703370>."
+            mensagem = f"🎉 Boas-vindas {membro.mention}! Que bom ter você aqui com a gente. Dê um oizinho e se apresente no <#1334976943409332244>."
             await canal_boas_vindas.send(mensagem)
 
     @discord.ui.button(label="Recusar / Fechar", style=discord.ButtonStyle.red, custom_id="fechar_ticket", emoji="🔒")
@@ -403,6 +427,7 @@ class Tickets(commands.Cog):
                 _salvar_avisados(self.membros_avisados)
                 continue
 
+            # Entre 24h e 48h e ainda não foi avisada → aviso
             elif horas_no_servidor >= 24 and membro.id not in self.membros_avisados:
                 try:
                     await canal_painel.send(
@@ -418,6 +443,7 @@ class Tickets(commands.Cog):
                 self.membros_avisados.add(membro.id)
                 _salvar_avisados(self.membros_avisados)
 
+    # ── before_loop garante que o bot está pronto antes do loop começar ───────
     @monitorar_inatividade.before_loop
     async def before_monitorar(self):
         await self.bot.wait_until_ready()
