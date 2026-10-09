@@ -43,7 +43,7 @@ Os comandos administrativos são restritos a quem tem as permissões de *Gerenci
 Esta política pode ser atualizada. A data no topo indica a versão mais recente.
 
 ### 8. Contato
-Para dúvidas ou solicitações: **[SEU E-MAIL OU USUÁRIO DO DISCORD AQUI]**
+Para dúvidas ou solicitações: **matsmoraes17@gmail.com**
 
 ---
 
@@ -84,4 +84,4 @@ Administrative commands are restricted to users with the *Manage Server* or *Adm
 This policy may be updated. The date at the top shows the latest version.
 
 ### 8. Contact
-For questions or requests: **[YOUR EMAIL OR DISCORD USERNAME HERE]**
+For questions or requests: **matsmoraes17@gmail.com**
